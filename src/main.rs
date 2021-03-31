@@ -8,40 +8,36 @@ mod camera;
 mod material;
 mod math;
 
-use vec::{Vec3, random};
+use vec::Vec3;
 use file_format::Format;
 use ray::Ray;
 use sphere::Sphere;
 use hittable::{HittableList};
 use camera::Camera;
 use material::Material;
-use math::clamp;
-use std::f64::consts::PI;
+use math::{clamp, random, random_clamped};
 use std::f64;
 
 fn main() {
-    let aspect_ratio = 16.0 / 9.0;
-    let image_width: u32 = 400;
+    let aspect_ratio = 3.0 / 2.0;
+    let image_width: u32 = 1200;
     let image_height = ((image_width as f64) / aspect_ratio) as u32;
     let max_color = 255;
-    let camera = Camera::new(aspect_ratio);
-    let samples_per_pixel = 100;
+    let samples_per_pixel = 10;
     let max_depth = 50;
+
+    let origin = Vec3::new(13.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
+    let up = Vec3::new(0.0, 1.0, 0.0);
+    let vfov = 20.0;
+    let aperture = 0.1;
+    let dist_to_focus = 10.0;
+    let camera = Camera::new(origin, lookat, up, vfov, aspect_ratio, aperture, dist_to_focus);
+
+    let world = random_scene();
 
     let file_format = Format::PP3(image_width, image_height, max_color);
     println!("{}", file_format.print_header());
-
-    let mut world = HittableList::new();
-
-    let material_ground = Material::Lambertian(Vec3::new(0.8, 0.8, 0.0));
-    let material_center = Material::Lambertian(Vec3::new(0.7, 0.3, 0.3));
-    let material_left   = Material::Metal(Vec3::new(0.8, 0.8, 0.8), 0.3);
-    let material_right  = Material::Metal(Vec3::new(0.8, 0.6, 0.2), 1.0);
-
-    world.add(Sphere::new(Vec3::new( 0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(Sphere::new(Vec3::new( 0.0,    0.0, -1.0), 0.5, material_center));
-    world.add(Sphere::new(Vec3::new(-1.0,    0.0, -1.0), 0.5, material_left));
-    world.add(Sphere::new(Vec3::new( 1.0,    0.0, -1.0), 0.5, material_right));
 
     for j in (0..image_height).rev() {
         eprintln!("Scanlines remaining: {}", j);
@@ -87,6 +83,47 @@ fn write_color(color: &Vec3, file_format: &Format, samples_per_pixel: u32) {
     println!("{} {} {}", color.x as i32, color.y as i32, color.z as i32);
 }
 
-fn degrees_to_radians(degrees: f64) -> f64 {
-    degrees * PI / 180.0
+fn random_scene<'a>() -> HittableList<'a> {
+    let mut world = HittableList::new();
+
+    let ground_material = Material::Lambertian(Vec3::new(0.5, 0.5, 0.5));
+    world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0, ground_material));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = random();
+            let center = Vec3::new(a as f64 + 0.9 * random(), 0.2, b as f64 + 0.9 * random());
+
+            if center.sub(&Vec3::new(4.0, 0.2, 0.0)).len() > 0.9 {
+                let sphere_material;
+                if choose_mat < 0.8 {
+                    // diffuse
+                    let color = Vec3::random_in_unit_sphere().mul(&Vec3::random_in_unit_sphere());
+                    sphere_material = Material::Lambertian(color);
+                    world.add(Sphere::new(center, 0.2, sphere_material));
+                } else if choose_mat < 0.95 {
+                    // metal
+                    let color = Vec3::random_in_unit_sphere().mul(&Vec3::new(0.5, 1.0, 1.0));
+                    let fuzz = random_clamped(0.0, 0.5);
+                    sphere_material = Material::Metal(color, fuzz);
+                    world.add(Sphere::new(center, 0.2, sphere_material));
+                } else {
+                    // glass
+                    sphere_material = Material::Dielectric(1.5);
+                    world.add(Sphere::new(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    let material1 = Material::Dielectric(1.5);
+    world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
+
+    let material2 = Material::Lambertian(Vec3::new(0.4, 0.2, 0.1));
+    world.add(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
+
+    let material3 = Material::Metal(Vec3::new(0.7, 0.6, 0.5), 0.0);
+    world.add(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
+
+    world
 }

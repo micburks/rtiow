@@ -1,5 +1,5 @@
 
-use rand::Rng;
+use crate::math::random_clamped;
 
 pub struct Vec3 {
     pub x: f64,
@@ -56,6 +56,13 @@ impl Vec3 {
     pub fn reflect(&self, other: &Vec3) -> Vec3 {
         self.sub(&other.scale(2.0 * self.dot(&other)))
     }
+    pub fn refract(&self, normal: &Vec3, etai_over_etat: f64) -> Vec3 {
+        let cos_theta = self.neg().dot(&normal).min(1.0);
+        let perpendicular = normal.scale(cos_theta).add(&self).scale(etai_over_etat);
+        let coefficient = (1.0 - perpendicular.length_squared()).abs().sqrt();
+        let parallel = normal.scale(-coefficient);
+        perpendicular.add(&parallel)
+    }
 }
 
 impl Vec3 {
@@ -68,6 +75,7 @@ impl Vec3 {
     pub fn random_unit_vector() -> Vec3 {
         Vec3::random_in_unit_sphere().unit()
     }
+    /*
     pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
         let r = Vec3::random_in_unit_sphere();
         if r.dot(&normal) > 0.0 {
@@ -76,6 +84,7 @@ impl Vec3 {
             r.neg()
         }
     }
+    */
     pub fn random_in_unit_sphere() -> Vec3 {
         loop {
             let v = Vec3::new(
@@ -88,14 +97,16 @@ impl Vec3 {
             }
         }
     }
+    pub fn random_in_unit_disk() -> Vec3 {
+        loop {
+            let v = Vec3::new(
+                random_clamped(-1.0, 1.0),
+                random_clamped(-1.0, 1.0),
+                0.0,
+                );
+            if v.length_squared() < 1.0 {
+                return v;
+            }
+        }
+    }
 }
-
-pub fn random() -> f64 {
-    let mut rng = rand::thread_rng();
-    rng.gen()
-}
-
-fn random_clamped(min: f64, max: f64) -> f64 {
-    min + ((max - min) * random())
-}
-
