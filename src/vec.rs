@@ -1,62 +1,63 @@
 
 use crate::math::random_clamped;
+use num_traits::Float;
 
-pub struct Vec3 {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+pub struct Vec3<T: Float> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
 }
 
-impl Vec3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Vec3 {
+impl<T: Float> Vec3<T> {
+    pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
     }
-    pub fn add(&self, other: &Vec3) -> Vec3 {
+    pub fn add(&self, other: &Vec3<T>) -> Vec3<T> {
         Vec3::new(self.x + other.x, self.y + other.y, self.z + other.z)
     }
-    pub fn sub(&self, other: &Vec3) -> Vec3 {
+    pub fn sub(&self, other: &Vec3<T>) -> Vec3<T> {
         let other_neg = other.neg();
         self.add(&other_neg)
     }
-    pub fn mul(&self, other: &Vec3) -> Vec3 {
+    pub fn mul(&self, other: &Vec3<T>) -> Vec3<T> {
         Vec3::new(self.x * other.x, self.y * other.y, self.z * other.z)
     }
-    pub fn scale(&self, scalar: f64) -> Vec3 {
+    pub fn scale(&self, scalar: f32) -> Vec3<T> {
         Vec3::new(self.x * scalar, self.y * scalar, self.z * scalar)
     }
-    pub fn neg(&self) -> Vec3 {
+    pub fn neg(&self) -> Vec3<T> {
         self.scale(-1.0)
     }
-    pub fn length_squared(&self) -> f64 {
+    pub fn length_squared(&self) -> f32 {
         self.dot(self)
     }
-    pub fn len(&self) -> f64 {
+    pub fn len(&self) -> f32 {
         self.length_squared().sqrt()
     }
-    pub fn unit(&self) -> Vec3 {
+    pub fn unit(&self) -> Vec3<T> {
         let length = self.len();
-        self.scale((1.0 / length) as f64)
+        self.scale((1.0 / length) as T)
     }
-    pub fn dot(&self, other: &Vec3) -> f64 {
+    pub fn dot(&self, other: &Vec3<T>) -> f32 {
         (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
     }
-    pub fn cross(&self, other: &Vec3) -> Vec3 {
+    pub fn cross(&self, other: &Vec3<T>) -> Vec3<T> {
         Vec3::new(
             (self.y * other.z) - (self.z * other.y),
             (self.z * other.x) - (self.x * other.z),
             (self.x * other.y) - (self.y * other.x),
             )
     }
-    pub fn clone(&self) -> Vec3 {
+    pub fn clone(&self) -> Vec3<T> {
         Vec3::new(self.x, self.y, self.z)
     }
-    pub fn apply<T: Fn(f64) -> f64>(&self, fun: T) -> Vec3 {
+    pub fn apply<R: Fn(T) -> T>(&self, fun: R) -> Vec3<T> {
         Vec3::new(fun(self.x), fun(self.y), fun(self.z))
     }
-    pub fn reflect(&self, other: &Vec3) -> Vec3 {
+    pub fn reflect(&self, other: &Vec3<T>) -> Vec3<T> {
         self.sub(&other.scale(2.0 * self.dot(&other)))
     }
-    pub fn refract(&self, normal: &Vec3, etai_over_etat: f64) -> Vec3 {
+    pub fn refract(&self, normal: &Vec3<T>, etai_over_etat: T) -> Vec3<T> {
         let cos_theta = self.neg().dot(&normal).min(1.0);
         let perpendicular = normal.scale(cos_theta).add(&self).scale(etai_over_etat);
         let coefficient = (1.0 - perpendicular.length_squared()).abs().sqrt();
@@ -65,19 +66,19 @@ impl Vec3 {
     }
 }
 
-impl Vec3 {
-    pub fn near_zero(v: &Vec3) -> bool {
+impl<T: Float> Vec3<T> {
+    pub fn near_zero(v: &Vec3<T>) -> bool {
         let tolerance = 1e-8;
         (v.x.abs() < tolerance)
             && (v.y.abs() < tolerance)
             && (v.z.abs() < tolerance)
     }
-    pub fn random_unit_vector() -> Vec3 {
+    pub fn random_unit_vector() -> Vec3<f32> {
         Vec3::random_in_unit_sphere().unit()
     }
     /*
-    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
-        let r = Vec3::random_in_unit_sphere();
+    pub fn random_in_hemisphere(normal: &Vec3<T>) -> Vec3<T> {
+        let r = Vec3<f32>::random_in_unit_sphere();
         if r.dot(&normal) > 0.0 {
             r
         } else {
@@ -85,7 +86,7 @@ impl Vec3 {
         }
     }
     */
-    pub fn random_in_unit_sphere() -> Vec3 {
+    pub fn random_in_unit_sphere() -> Vec3<f32> {
         loop {
             let v = Vec3::new(
                 random_clamped(-1.0, 1.0),
@@ -97,7 +98,7 @@ impl Vec3 {
             }
         }
     }
-    pub fn random_in_unit_disk() -> Vec3 {
+    pub fn random_in_unit_disk() -> Vec3<f32> {
         loop {
             let v = Vec3::new(
                 random_clamped(-1.0, 1.0),

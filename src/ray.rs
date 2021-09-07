@@ -1,19 +1,20 @@
 
 use crate::vec::Vec3;
+use num_traits::Float;
 
-pub struct Ray {
-    pub origin: Vec3,
-    pub direction: Vec3,
+pub struct Ray<T: Float> {
+    pub origin: Vec3<T>,
+    pub direction: Vec3<T>,
 }
 
-impl Ray {
-    pub fn new(orig: Vec3, dir: Vec3) -> Ray {
+impl<T: Float> Ray<T> {
+    pub fn new(orig: Vec3<T>, dir: Vec3<T>) -> Ray<T> {
         Ray {
             origin: orig,
             direction: dir,
         }
     }
-    pub fn at(&self, t: f64) -> Vec3 {
+    pub fn at(&self, t: f32) -> Vec3<T> {
         self.origin.add(&self.direction.scale(t))
     }
 }

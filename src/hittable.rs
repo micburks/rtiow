@@ -2,21 +2,22 @@
 use crate::vec::Vec3;
 use crate::ray::Ray;
 use crate::material::Material;
+use num_traits::Float;
 
-pub trait Hittable {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+pub trait Hittable<T: Float> {
+    fn hit(&self, ray: &Ray<T>, t_min: f32, t_max: f32) -> Option<HitRecord<T>>;
 }
 
-pub struct HitRecord {
-    pub point: Vec3,
-    pub normal: Vec3,
-    pub t: f64,
+pub struct HitRecord<T: Float> {
+    pub point: Vec3<T>,
+    pub normal: Vec3<T>,
+    pub t: f32,
     pub front_face: bool,
-    pub material: Material,
+    pub material: Material<T>,
 }
 
-impl HitRecord {
-    pub fn new(ray: &Ray, t: f64, normal: Vec3, material: Material) -> HitRecord {
+impl<T: Float> HitRecord<T> {
+    pub fn new(ray: &Ray<T>, t: f32, normal: Vec3<T>, material: Material<T>) -> HitRecord<T> {
         let point = ray.at(t);
         let outward_normal;
         let front_face;
@@ -31,18 +32,18 @@ impl HitRecord {
     }
 }
 
-pub struct HittableList<'a>(
-    Vec<Box<dyn Hittable + 'a>>
+pub struct HittableList<'a, T>(
+    Vec<Box<dyn Hittable<T> + 'a>>
 );
 
-impl<'a> HittableList<'a> {
-    pub fn new() -> HittableList<'a> {
+impl<'a, T: Float> HittableList<'a, T> {
+    pub fn new() -> HittableList<'a, T> {
         HittableList(vec![])
     }
-    pub fn add(&mut self, i: impl Hittable + 'a) {
+    pub fn add(&mut self, i: impl Hittable<T> + 'a) {
         self.0.push(Box::new(i))
     }
-    pub fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray<T>, t_min: f32, t_max: f32) -> Option<HitRecord<T>> {
         let mut closest = t_max;
         let mut closest_hit = None;
         for hittable in &self.0 {

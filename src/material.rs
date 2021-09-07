@@ -3,15 +3,16 @@ use crate::vec::Vec3;
 use crate::ray::Ray;
 use crate::hittable::HitRecord;
 use crate::math::{clamp, reflectance, random};
+use num_traits::Float;
 
-pub enum Material {
-    Lambertian(Vec3),
-    Metal(Vec3, f64),
-    Dielectric(f64),
+pub enum Material<T: Float> {
+    Lambertian(Vec3<T>),
+    Metal(Vec3<T>, f32),
+    Dielectric(f32),
 }
 
-impl Material {
-    pub fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
+impl<T: Float> Material<T> {
+    pub fn scatter(&self, ray: &Ray<T>, record: &HitRecord<T>) -> Option<ScatterResult<T>> {
         match self {
             Material::Lambertian(color) => {
                 // hemispherical scattering diffuse method
@@ -65,7 +66,7 @@ impl Material {
             }
         }
     }
-    pub fn clone(&self) -> Material {
+    pub fn clone(&self) -> Material<T> {
         match self {
             Material::Lambertian(color) => Material::Lambertian(color.clone()),
             Material::Metal(color, fuzz) => Material::Metal(color.clone(), *fuzz),
@@ -74,7 +75,7 @@ impl Material {
     }
 }
 
-pub struct ScatterResult {
-    pub ray: Ray,
-    pub attenuation: Vec3,
+pub struct ScatterResult<T: Float> {
+    pub ray: Ray<T>,
+    pub attenuation: Vec3<T>,
 }

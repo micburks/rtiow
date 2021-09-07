@@ -2,28 +2,29 @@
 use crate::vec::Vec3;
 use crate::ray::Ray;
 use crate::math::degrees_to_radians;
+use num_traits::Float;
 
-pub struct Camera {
-    origin: Vec3,
-    horizontal: Vec3,
-    vertical: Vec3,
-    lower_left_corner: Vec3,
-    u: Vec3,
-    v: Vec3,
-    // w: Vec3,
-    lens_radius: f64,
+pub struct Camera<T: Float> {
+    origin: Vec3<T>,
+    horizontal: Vec3<T>,
+    vertical: Vec3<T>,
+    lower_left_corner: Vec3<T>,
+    u: Vec3<T>,
+    v: Vec3<T>,
+    // w: Vec3<T>,
+    lens_radius: f32,
 }
 
-impl Camera {
+impl<T: Float> Camera<T> {
     pub fn new(
-        origin: Vec3,
-        lookat: Vec3,
-        up: Vec3,
-        vfov: f64,
-        aspect_ratio: f64,
-        aperture: f64,
-        focus_dist: f64,
-    ) -> Camera {
+        origin: Vec3<T>,
+        lookat: Vec3<T>,
+        up: Vec3<T>,
+        vfov: f32,
+        aspect_ratio: f32,
+        aperture: f32,
+        focus_dist: f32,
+    ) -> Camera<T> {
         let theta = degrees_to_radians(vfov);
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h;
@@ -52,7 +53,7 @@ impl Camera {
             lens_radius,
         }
     }
-    pub fn get_ray(&self, s: f64, t: f64) -> Ray {
+    pub fn get_ray(&self, s: f32, t: f32) -> Ray<T> {
         let rd = Vec3::random_in_unit_disk().scale(self.lens_radius);
         let offset = self.u.scale(rd.x).add(&self.v.scale(rd.y));
         let offset_origin = self.origin.add(&offset);

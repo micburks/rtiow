@@ -3,21 +3,22 @@ use crate::hittable::{Hittable, HitRecord};
 use crate::vec::Vec3;
 use crate::ray::Ray;
 use crate::material::Material;
+use num_traits::Float;
 
-pub struct Sphere {
-    pub center: Vec3,
-    pub radius: f64,
-    pub material: Material,
+pub struct Sphere<T: Float> {
+    pub center: Vec3<T>,
+    pub radius: T,
+    pub material: Material<T>,
 }
 
-impl Sphere {
-    pub fn new(center: Vec3, radius: f64, material: Material) -> Sphere {
+impl<T: Float> Sphere<T> {
+    pub fn new(center: Vec3<T>, radius: T, material: Material<T>) -> Sphere<T> {
         Sphere { center, radius, material }
     }
 }
 
-impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+impl<T: Float> Hittable<T> for Sphere<T> {
+    fn hit(&self, ray: &Ray<T>, t_min: f32, t_max: f32) -> Option<HitRecord<T>> {
         let oc = ray.origin.sub(&self.center);
         let a = ray.direction.length_squared();
         let half_b = oc.dot(&ray.direction);
@@ -26,7 +27,7 @@ impl Hittable for Sphere {
         if discriminant < 0.0 {
             return None;
         }
-        let sqrtd = discriminant.sqrt();
+        let sqrtd = discriminant.sqrt() as f32;
         let mut root = (-half_b - sqrtd) / a;
         if root < t_min || t_max < root {
             root = (-half_b + sqrtd) / a;

@@ -16,14 +16,15 @@ use hittable::{HittableList};
 use camera::Camera;
 use material::Material;
 use math::{clamp, random, random_clamped};
-use std::f64;
+use std::f32;
+use num_traits::Float;
 
 fn main() {
     let aspect_ratio = 3.0 / 2.0;
-    let image_width: u32 = 1200;
-    let image_height = ((image_width as f64) / aspect_ratio) as u32;
+    let image_width: u32 = 400;
+    let image_height = ((image_width as f32) / aspect_ratio) as u32;
     let max_color = 255;
-    let samples_per_pixel = 10;
+    let samples_per_pixel = 500;
     let max_depth = 50;
 
     let origin = Vec3::new(13.0, 2.0, 3.0);
@@ -44,8 +45,8 @@ fn main() {
         for i in 0..image_width {
             let mut color = Vec3::new(0.0, 0.0, 0.0);
             for _ in 0..samples_per_pixel {
-                let u = (i as f64 + random()) as f64 / (image_width as f64 - 1.0);
-                let v = (j as f64 + random()) as f64 / (image_height as f64 - 1.0);
+                let u = (i as f32 + random()) as f32 / (image_width as f32 - 1.0);
+                let v = (j as f32 + random()) as f32 / (image_height as f32 - 1.0);
                 let ray = camera.get_ray(u, v);
                 color = color.add(&ray_color(&ray, &world, max_depth));
             }
@@ -55,12 +56,12 @@ fn main() {
     eprintln!("Done.");
 }
 
-fn ray_color(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
+fn ray_color(ray: &Ray<f32>, world: &HittableList<f32>, depth: i32) -> Vec3<f32> {
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
     let t_min = 0.001;
-    let t_max = f64::INFINITY;
+    let t_max = f32::INFINITY;
     if let Some(record) = world.hit(&ray, t_min, t_max) {
         if let Some(scattered) = record.material.scatter(&ray, &record) {
             return scattered.attenuation.mul(&ray_color(&scattered.ray, world, depth - 1));
@@ -75,15 +76,15 @@ fn ray_color(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
     white.scale(1.0 - t).add(&blue.scale(t))
 }
 
-fn write_color(color: &Vec3, file_format: &Format, samples_per_pixel: u32) {
-    let color = color.scale(1.0 / samples_per_pixel as f64)
+fn write_color(color: &Vec3<f32>, file_format: &Format, samples_per_pixel: u32) {
+    let color = color.scale(1.0 / samples_per_pixel as f32)
         .apply(|val| val.sqrt()) // gamma = 2 correction
         .apply(|val| clamp(val, 0.0, 0.999))
-        .scale(file_format.max_color() as f64);
+        .scale(file_format.max_color() as f32);
     println!("{} {} {}", color.x as i32, color.y as i32, color.z as i32);
 }
 
-fn random_scene<'a>() -> HittableList<'a> {
+fn random_scene<'a>() -> HittableList<'a, f32> {
     let mut world = HittableList::new();
 
     let ground_material = Material::Lambertian(Vec3::new(0.5, 0.5, 0.5));
@@ -92,7 +93,7 @@ fn random_scene<'a>() -> HittableList<'a> {
     for a in -11..11 {
         for b in -11..11 {
             let choose_mat = random();
-            let center = Vec3::new(a as f64 + 0.9 * random(), 0.2, b as f64 + 0.9 * random());
+            let center = Vec3::new(a as f32 + 0.9 * random(), 0.2, b as f32 + 0.9 * random());
 
             if center.sub(&Vec3::new(4.0, 0.2, 0.0)).len() > 0.9 {
                 let sphere_material;
